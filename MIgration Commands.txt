@@ -1,0 +1,414 @@
+Zabbix_appliance: 
+MEMORY: 23014
+PROCES: 4
+
+kasi-PRTG:
+MEMORY: 8192
+PRCESS: 4
+
+kasiVidMgr:
+memory:16384
+process: 8
+
+KasiIOT:
+memory:16384
+process: 4
+
+testserver: 
+memory: 16384
+process: 4
+
+
+mkdir -p ~/VBoxBackup
+cp -r ~/VirtualBox\ VMs ~/VBoxBackup/
+
+
+qemu-img convert -f vdi -O qcow2 /home/unix/VBoxBackup/'VirtualBox VMs'/zabbix_appliance-7.0.4/zabbix_appliance-7.0.4-disk001.vdi /home/unix/VBoxBackup/Converted-Images/zabbix_appliance-7.0.4-disk001.qcow2
+ 
+qemu-img convert -f vdi -O qcow2 /home/unix/VBoxBackup/'VirtualBox VMs'/kasi-PRTG/kasi-PRTG.vdi /home/unix/VBoxBackup/Converted-Images/kasi-PRTG.qcow2
+
+qemu-img convert -f vdi -O qcow2 /home/unix/VBoxBackup/'VirtualBox VMs'/'ERPNext Server'/'ERPNext Server.vdi' /home/unix/VBoxBackup/Converted-Images/'ERPNext Server.qcow2'
+
+qemu-img convert -f vdi -O qcow2 /home/unix/VBoxBackup/'VirtualBox VMs'/KasiIOT/KasiIOT.vdi /home/unix/VBoxBackup/Converted-Images/KasiIOT.qcow2
+
+qemu-img convert -f vdi -O qcow2 /home/unix/VBoxBackup/'VirtualBox VMs'/KasiVidMgnr/KasiVidMgnr.vdi /home/unix/VBoxBackup/Converted-Images/KasiVidMgr.qcow2
+
+qemu-img convert -f vdi -O qcow2 /home/unix/VBoxBackup/'VirtualBox VMs'/testServer/testServer.vdi /home/unix/VBoxBackup/Converted-Images/testServer.qcow2
+
+
+
+qemu-img info /home/unix/VBoxBackup/Converted-Images/zabbix_appliance-7.0.4-disk001.qcow2
+
+qemu-img info /home/unix/VBoxBackup/Converted-Images/kasi-PRTG.qcow2
+
+qemu-img info /home/unix/VBoxBackup/Converted-Images/KasiIOT.qcow2
+
+qemu-img info /home/unix/VBoxBackup/Converted-Images/KasiVidMgr.qcow2
+
+qemu-img info /home/unix/VBoxBackup/Converted-Images/testServer.qcow2
+
+
+scp -r unix@192.168.0.61:/home/unix/VBoxBackup/Converted-Images/ kasi@192.168.0.63:/home/kasi/
+
+scp -r unix@192.168.0.62:/home/unix/VBoxBackup/Converted-Images/ kasi@192.168.0.63:/home/kasi/qemu-images
+
+scp -r unix@192.168.0.62:/home/unix/.config/GNS3/2.2/ kasi@192.168.0.63:/home/kasi/.config/GNS3/2.2/
+
+
+sudo cp /home/kasi/Converted-Images/zabbix_appliance-7.0.4-disk001.qcow2 /var/lib/libvirt/images/
+
+sudo cp /home/kasi/Converted-Images/kasi-PRTG.qcow2 /var/lib/libvirt/images/
+
+sudo cp /home/kasi/qemu-images/Converted-Images/KasiVidMgr.qcow2 /var/lib/libvirt/images/
+
+sudo cp /home/kasi/qemu-images/Converted-Images/KasiIOT.qcow2 /var/lib/libvirt/images/
+
+sudo cp /home/kasi/qemu-images/Converted-Images/testServer.qcow2 /var/lib/libvirt/images/
+
+sudo rsync --progress /home/kasi/testServer.qcow2 /var/lib/libvirt/images/
+
+
+sudo virt-install \
+  --name zabbix-server \
+  --ram 33000 \
+  --vcpus 4 \
+  --disk path=/var/lib/libvirt/images/zabbix_appliance-7.0.4-disk001.qcow2,format=qcow2 \
+  --import \
+  --network bridge=virbr1 \
+  --osinfo detect=on,require=off \
+  --graphics vnc,port=59001,listen=0.0.0.0 \
+  --noautoconsole
+
+
+sudo virt-install \
+  --name kasi-PRTG \
+  --ram 8192 \
+  --vcpus 4 \
+  --disk path=/var/lib/libvirt/images/kasi-PRTG.qcow2,format=qcow2 \
+  --import \
+  --network bridge=virbr1 \
+  --osinfo detect=on,require=off \
+  --graphics vnc,port=59001,listen=0.0.0.0 \
+  --noautoconsole
+
+
+sudo virt-install \
+  --name kasiVidMgr \
+  --ram 16384 \
+  --vcpus 8 \
+  --disk path=/var/lib/libvirt/images/KasiVidMgr.qcow2,format=qcow2 \
+  --import \
+  --network bridge=virbr1 \
+  --osinfo detect=on,require=off \
+  --noautoconsole
+
+sudo virt-install \
+  --name kasiIOT \
+  --ram 16384 \
+  --vcpus 4 \
+  --disk path=/var/lib/libvirt/images/KasiIOT.qcow2,format=qcow2 \
+  --import \
+  --network bridge=virbr1 \
+  --osinfo detect=on,require=off \
+  --noautoconsole
+
+sudo virt-install \
+  --name testserver \
+  --ram 33000 \
+  --vcpus 4 \
+  --disk path=/var/lib/libvirt/images/testServer.qcow2,format=qcow2 \
+  --import \
+  --network bridge=virbr1 \
+  --osinfo detect=on,require=off \
+  --graphics vnc,port=59000,listen=0.0.0.0 \
+  --noautoconsole
+
+sudo virsh list --all
+sudo virsh start zabbix-server
+sudo virsh domifaddr zabbix-server
+sudo virsh console zabbix-server (Press Ctrl+] to exit)
+
+#configure auostart
+sudo systemctl enable libvirtd
+sudo systemctl start libvirtd
+
+sudo virsh autostart zabbix-server
+sudo virsh autostart kasi-PRTG
+sudo virsh autostart kasiIOT
+sudo virsh autostart kasiVidMgr
+sudo virsh autostart testserver
+
+
+sudo virsh list --name | while read vm; do
+  if [ -n "$vm" ]; then
+    disp=$(sudo virsh vncdisplay "$vm")
+    if [ "$disp" != "-" ]; then
+      port=$((5900 + ${disp#:}))
+      echo "$vm  →  VNC display $disp  →  port $port"
+    else
+      echo "$vm  →  no VNC (maybe SPICE)"
+    fi
+  fi
+done
+
+
+sudo virsh list --autostart
+
+⚡ 4️⃣ Make libvirt handle clean shutdown automatically at host shutdown
+
+Edit (or create if not existing):
+
+sudo nano /etc/libvirt/qemu.conf
+
+
+Add or ensure this line is uncommented and set:
+
+on_poweroff = "destroy"
+on_reboot = "restart"
+on_crash = "restart"
+
+
+And edit /etc/libvirt/libvirtd.conf:
+
+shutdown_timeout = 180
+
+
+This gives 180 seconds for VMs to gracefully shut down when the host is going down.
+
+Then reload:
+
+sudo systemctl restart libvirtd
+
+ip addr show
+systemctl start zabbix-server
+systemctl status zabbix-server
+systemctl status zabbix-agent
+systemctl status nginx
+
+ps aux | grep -i mysql
+
+
+# 1. Stop Zabbix server to prevent DB access during restart
+systemctl stop zabbix-server
+
+# 2. Kill the running MySQL process
+kill -9 1151
+
+# 3. Start it again manually
+/usr/libexec/mysqld --basedir=/usr --datadir=/var/lib/mysql --user=mysql &
+sudo /usr/libexec/mysqld --console --user=mysql
+systemctl restart network
+
+top -c
+
+pkill -f gns3-server
+
+sudo apt install ovmf
+
+ls /usr/share/OVMF/
+sudo cp /usr/share/OVMF/OVMF_VARS_4M.fd /var/lib/libvirt/qemu/nvram/kasi-PRTG_VARS.fd
+sudo chown libvirt-qemu:kvm /var/lib/libvirt/qemu/nvram/kasi-PRTG_VARS.fd
+sudo virsh edit kasi-PRTG
+
+<os>
+  <type arch='x86_64' machine='pc-q35-7.2'>hvm</type>
+  <loader readonly='yes' type='pflash'>/usr/share/OVMF/OVMF_CODE_4M.fd</loader>
+  <nvram>/var/lib/libvirt/qemu/nvram/kasi-PRTG_VARS.fd</nvram>
+  <boot dev='hd'/>
+</os>
+
+lsof /home/kasi/GNS3/images/QEMU/vEOS-lab-4.33.5M.qcow2
+
+lsof /home/kasi/GNS3/images/QEMU/fortios.qcow2
+
+qemu-img rebase -u /home/kasi/GNS3/images/QEMU/fortios.qcow2
+
+qemu-img rebase -u /home/kasi/GNS3/images/QEMU/vEOS-lab-4.33.5M.qcow2
+
+mv -r /home/kasi/Converted-Images/zabbix_appliance-7.0.4-disk001.qcow2 /home/kasi/qemu-images
+
+
+<graphics type='vnc' port='59003' listen='0.0.0.0'/>
+
+ <graphics type='spice' autoport='yes'>
+
+sudo lvextend -l +100%FREE /dev/ubuntu-vg/ubuntu-lv
+
+sudo lvs
+
+sudo resize2fs /dev/ubuntu-vg/ubuntu-lv
+
+df -h
+
+network:
+  version: 2
+  ethernets:
+    eno1:
+      dhcp4: false
+      dhcp6: false
+
+
+#add configuration for bridge interface
+  bridges:
+    virbr1:
+      interfaces: [eno1]
+      dhcp4: false
+      dhcp6: false
+      addresses: [192.168.0.67/24]
+      routes:
+        - to: default
+          via: 192.168.0.1
+          metric: 10
+      nameservers:
+        addresses: [8.8.8.8, 4.2.2.2]
+      parameters:
+        stp: false
+
+
+
+scp -r kasi@192.168.0.63:/home/kasi/qemu-images/Converted-Images/zabbix_appliance-7.0.4-disk001.qcow2 kasi@192.168.0.67:/home/kasi/
+
+
+scp -r kasi@192.168.0.63:/home/kasi/qemu-images/Converted-Images/testServer.qcow2 kasi@192.168.0.67:/home/kasi/
+
+
+scp -r kasi@192.168.0.63:/home/kasi/kasi-PRTG.qcow2 kasi@192.168.0.67:/home/kasi/
+
+scp -r kasi@192.168.0.63:/home/kasi/kasi-otobo.qcow2 kasi@192.168.0.67:/home/kasi/
+
+sudo rsync --progress /var/lib/libvirt/images/zabbix_appliance-7.0.4-disk001.qcow2 /home/kasi/
+
+sudo rsync --progress /var/lib/libvirt/images/kasi-PRTG.qcow2 /home/kasi/
+
+sudo rsync --progress /var/lib/libvirt/images/kasi-otobo.qcow2 /home/kasi/
+
+scp -r kasi@192.168.0.63:/var/lib/libvirt/images/ubuntu-24.04.3-live-server-amd64.iso kasi@192.168.0.68:/home/kasi/
+rsync -avhP /var/lib/libvirt/images/kasi-otobo.qcow2 kasi@10.10.1:/home/kasi/
+
+sudo ddrescue -n /var/lib/libvirt/images/kasi-otobo.qcow2 /home/kasi/kasi-otobo-rescued.qcow2 rescue.log
+
+
+sudo ddrescue -n -b 4M /var/lib/libvirt/images/kasi-otobo.qcow2 /home/kasi/kasi-otobo-rescued.qcow2 rescue.log
+
+
+
+
+
+scp -r kasi@192.168.0.63:/var/lib/libvirt/images/ubuntu-24.04.3-live-server-amd64.iso kasi@192.168.0.68:/home/kasi/
+
+scp -r kasi@192.168.0.63:/var/lib/libvirt/images/K8S-master.qcow2 kasi@192.168.0.68:/home/kasi/
+
+scp -r kasi@192.168.0.63:/var/lib/libvirt/images/k8s-master-01.qcow2 kasi@192.168.0.68:/home/kasi
+
+scp -r kasi@192.168.0.63:/var/lib/libvirt/images/k8s-master-01.qcow2 kasi@192.168.0.68:/home/kasi
+
+scp -r kasi@192.168.0.63:/home/kasi/qemu-images/Converted-Images/testServer.qcow2 kasi@192.168.0.68:/home/kasi/
+
+scp -r kasi@192.168.0.63:/home/kasi/qemu-images/Converted-Images/KasiVidMgr.qcow2 kasi@192.168.0.68:/home/kasi/
+
+scp -r kasi@192.168.0.63:/home/kasi/qemu-images/Converted-Images/KasiIOT.qcow2 kasi@192.168.0.68:/home/kasi/
+
+sudo rsync --progress /home/kasi/zabbix_appliance-7.0.4-disk001.qcow2 /var/lib/libvirt/images/
+
+sudo rsync --progress /home/kasi/k8s-master-01.qcow2 /var/lib/libvirt/images/
+
+sudo rsync --progress /home/kasi/k8s-worker-01.qcow2 /var/lib/libvirt/images/
+
+sudo rsync --progress /home/kasi/k8s-worker-02.qcow2 /var/lib/libvirt/images/
+
+sudo rsync --progress /home/kasi/kasi-otobo.qcow2 /var/lib/libvirt/images/
+
+sudo rsync --progress /home/kasi/ubuntu-24.04.3-live-server-amd64.iso /var/lib/libvirt/images/
+
+sudo virt-install \
+  --name zabbix-server \
+  --ram 33000 \
+  --vcpus 4 \
+  --disk path=/var/lib/libvirt/images/zabbix_appliance-7.0.4-disk001.qcow2,format=qcow2 \
+  --import \
+  --network bridge=virbr1 \
+  --osinfo detect=on,require=off \
+  --graphics vnc,port=59001,listen=0.0.0.0 \
+  --noautoconsole
+
+sudo virt-install \
+  --name kasi-PRTG \
+  --ram 33000 \
+  --vcpus 4 \
+  --disk path=/var/lib/libvirt/images/kasi-PRTG.qcow2,format=qcow2 \
+  --import \
+  --network bridge=virbr1 \
+  --osinfo detect=on,require=off \
+  --graphics vnc,port=59002,listen=0.0.0.0 \
+  --noautoconsole
+
+sudo virt-install \
+  --name kasi-otobo \
+  --ram 33000 \
+  --vcpus 8 \
+  --disk path=/var/lib/libvirt/images/kasi-otobo.qcow2,format=qcow2 \
+  --import \
+  --network bridge=virbr1 \
+  --cdrom /var/lib/libvirt/images/ubuntu-24.04.3-live-server-amd64.iso \
+  --osinfo detect=on,require=off \
+  --graphics vnc,port=59003,listen=0.0.0.0 \
+  --noautoconsole
+
+
+
+sudo virt-install \
+  --name kasiVidMgr \
+  --ram 16384 \
+  --vcpus 8 \
+  --disk path=/var/lib/libvirt/images/KasiVidMgr.qcow2,format=qcow2 \
+  --import \
+  --network bridge=virbr1 \
+  --osinfo detect=on,require=off \
+  --graphics vnc,port=59001,listen=0.0.0.0 \
+  --noautoconsole
+
+sudo virt-install \
+  --name kasiIOT \
+  --ram 16384 \
+  --vcpus 4 \
+  --disk path=/var/lib/libvirt/images/KasiIOT.qcow2,format=qcow2 \
+  --import \
+  --network bridge=virbr1 \
+  --osinfo detect=on,require=off \
+  --graphics vnc,port=59002,listen=0.0.0.0 \
+  --noautoconsole
+
+sudo virt-install \
+  --name testserver \
+  --ram 33000 \
+  --vcpus 4 \
+  --disk path=/var/lib/libvirt/images/testServer.qcow2,format=qcow2 \
+  --import \
+  --network bridge=virbr1 \
+  --osinfo detect=on,require=off \
+  --graphics vnc,port=59003,listen=0.0.0.0 \
+  --noautoconsole
+
+
+sudo virt-install \
+  --name k8s-worker-02 \
+  --ram 16384 \
+  --vcpus 8 \
+  --disk path=/var/lib/libvirt/images/k8s-worker-02.qcow2,format=qcow2 \
+  --import \
+  --network bridge=virbr1 \
+  --osinfo detect=on,require=off \
+  --graphics vnc,port=59007,listen=0.0.0.0 \
+  --noautoconsole
+ 
+
+sudo virt-install \
+  --name Graylog \
+  --ram 32768 \
+  --vcpus 4 \
+  --disk path=/var/lib/libvirt/images/,format=qcow2 \
+  --import \
+  --network bridge=virbr1 \
+  --osinfo detect=on,require=off \
+  --graphics vnc,port=59002,listen=0.0.0.0 \
+  --noautoconsole

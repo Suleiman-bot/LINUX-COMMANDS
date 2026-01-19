@@ -1,0 +1,174 @@
+prepare Linux environment
+ sudo apt update && sudo apt upgrade -y
+
+download essential packages
+ sudo apt install -y software-properties-common curl git unzip
+
+Download the GNS3 server on Linux
+ sudo add-apt-repository ppa:gns3/ppa -y
+ sudo apt update
+ sudo apt install -y gns3-server gns3-gui
+
+Directories
+ls -l ~/GNS3/projects
+ls -l ~/GNS3/images/QEMU
+ls -l ~/.local/share/GNS3/appliances
+ls -l ~/.config/GNS3/2.2/gns3_controller.conf
+
+
+inject Qcow and swi
+
+Step 1: Connect the QCOW2
+sudo modprobe nbd max_part=8
+sudo qemu-nbd --connect=/dev/nbd0 /home/kasi/vEOS-lab-4.33.5M.qcow2
+
+Step 2: Check partitions (just to confirm)
+sudo fdisk -l /dev/nbd0
+
+
+You should see something like:
+
+/dev/nbd0p1  →  small hidden partition
+/dev/nbd0p2  →  main Linux filesystem (~4G)
+
+
+We will mount p2, same as before.
+
+Step 3: Mount the main partition
+sudo mkdir -p /mnt/veos
+sudo mount /dev/nbd0p2 /mnt/veos
+
+Step 4: Copy the SWI inside
+sudo cp /home/kasi/vEOS-lab-4.33.5M.swi /mnt/veos/
+sudo sync
+
+Step 5: Unmount and disconnect
+sudo umount /mnt/veos
+sudo qemu-nbd --disconnect /dev/nbd0
+
+
+Stop KVM
+sudo modprobe -r kvm_intel
+sudo modprobe -r kvm
+
+Start KVM
+sudo modprobe -r kvm_intel
+sudo modprobe -r kvm
+
+
+GNS3 Config
+nano ~/.config/GNS3/2.2/gns3_server.conf
+
+[Server]
+host = 0.0.0.0
+port = 3080
+auth = false
+
+[Qemu]
+enable_kvm = false (toggle off)
+
+enable_kvm = true  (toggle on)
+
+🧩 Step-by-step (finalized for your host)
+1️⃣ Create the service file
+
+Run:
+
+sudo nano /etc/systemd/system/gns3server.service
+
+
+Paste this exact content:
+
+[Unit]
+Description=GNS3 Server
+After=network.target
+
+[Service]
+Type=simple
+User=unix
+ExecStart=/usr/bin/gns3server --local
+Restart=on-failure
+RestartSec=5
+StandardOutput=append:/var/log/gns3server.log
+StandardError=append:/var/log/gns3server.log
+
+[Install]
+WantedBy=multi-user.target
+
+
+💡 Replace User=unix if your username is different — but in your case it’s correct.
+
+2️⃣ Reload and enable
+sudo systemctl daemon-reload
+sudo systemctl enable gns3server.service
+
+
+This makes it start automatically at boot.
+
+3️⃣ Start and check
+sudo systemctl start gns3server.service
+sudo systemctl status gns3server.service
+
+
+You should see:
+
+Active: active (running)
+Main PID: xxxx (gns3server)
+
+4️⃣ (Optional) View logs
+
+To monitor GNS3 output:
+
+tail -f /var/log/gns3server.log
+
+
+or, using journalctl:
+
+sudo journalctl -u gns3server.service -f
+
+🧠 Confirm at reboot
+
+Reboot your host:
+
+sudo reboot
+
+
+Then after login:
+
+sudo systemctl status gns3server.service
+
+
+
+🧩 Optional — Quick commands
+Action	Command
+Check service status	sudo systemctl status gns3server
+Stop service		sudo systemctl stop gns3server
+Start service		sudo systemctl start gns3server
+Restart service		sudo systemctl restart gns3server
+View logs live		sudo journalctl -u gns3server -f
+Disable autostart	sudo systemctl disable gns3server
+
+
+
+config system interface
+    edit VLAN3999
+        set vdom root
+        set interface portX         # (the interface connected to the Arista)
+        set vlanid 3999
+        set ip 10.0.0.1 255.255.255.0
+        set allowaccess ping ssh https
+    next
+end
+
+
+
+ edit "Vlan3999"
+        set vdom "root"
+        set ip 10.0.0.1 255.255.255.0
+        set allowaccess ping https ssh
+        set device-identification enable
+        set role lan
+        set snmp-index 14
+        set interface "port2"
+        set vlanid 3999
+    next

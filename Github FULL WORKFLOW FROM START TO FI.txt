@@ -1,0 +1,115 @@
+✅ 🔹 FULL WORKFLOW FROM START TO FINISH (copy & save)
+
+(Everything you need to clone, create branch, push, update, and PR.)
+
+1) Clone your repo (first time only)
+git clone https://github.com/KasiCloud/sysadmin.git
+cd sysadmin
+
+2) Set your Git identity (first time only)
+git config --global user.name "Suleiman-Abdulsalam"
+git config --global user.email "suleiman.abdulsalam@kasicloud.com"
+
+3) Switch to develop branch & pull latest
+git checkout develop
+git pull origin develop
+
+4) Create your feature branch (you will always work from this)
+git checkout -b feature/suleiman-updates
+
+5) After making changes → stage and commit
+git add .
+git commit -m "update: suleiman latest changes"
+
+6) Push your branch to GitHub (first time)
+git push -u origin feature/suleiman-updates
+
+
+Next time you push updates, you’ll use:
+
+git push
+
+7) Open a Pull Request
+
+Go to GitHub:
+
+Compare: feature/suleiman-updates → develop
+Then click: Create Pull Request
+
+(Your manager reviews and approves.)
+
+8) If develop has new updates → sync your branch
+Option A — merge develop into your branch (easiest, safest)
+git checkout develop
+git pull origin develop
+
+git checkout suleiman-updates
+git merge develop
+
+
+— Fix conflicts if Git asks
+— Then:
+
+git add .
+git commit -m "merge develop into suleiman-updates"
+git push
+
+Option B — rebase onto develop (cleaner history)
+git checkout suleiman-updates
+git fetch origin
+git rebase origin/develop
+
+
+If conflicts appear:
+resolve → then:
+
+git add .
+git rebase --continue
+git push --force-with-lease
+
+9) After PR is approved
+
+Manager merges into develop.
+
+Then you update locally:
+
+git checkout develop
+git pull origin develop
+
+
+If starting a new task:
+
+git checkout -b suleiman-updates
+
+✅ THIS IS ALL YOU NEED — SIMPLE VERSION BELOW
+
+If you just want the “daily use” version, here it is:
+
+⭐ DAILY USE COMMANDS (copy & save)
+# Update develop
+git checkout develop
+git pull origin develop
+
+# Switch to your branch
+git checkout feature/suleiman-updates
+
+# Merge develop into your branch (to stay updated)
+git merge develop
+
+# Do work, then:
+git add .
+git commit -m "my update"
+git push
+
+
+gh pr create --base develop --head feature/suleiman-updates --title "Update: Added Proposed FWs Policies" --body "Created a new file: FIREWALL-POLICIES.cfg for review"
+
+
+https://github.com/KasiCloud/sysadmin/pull/new/feature/suleiman-updates
+
+
+
+git config --global user.name "Suleiman-Abdulsalam"
+git config --global user.email "suleiman.abdulsalam@kasicloud.com"
+
+git checkout -b feature/suleiman's Updates

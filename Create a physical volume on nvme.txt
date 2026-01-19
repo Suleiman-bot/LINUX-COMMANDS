@@ -1,0 +1,78 @@
+# 1️⃣ Create a physical volume on your new NVMe drive
+sudo pvcreate /dev/nvme0n1
+
+# 2️⃣ Create a new volume group called "vm-vg" using that physical volume
+sudo vgcreate vm-vg /dev/nvme0n1
+
+# 3️⃣ Create a logical volume called "vmdata" using all space in the volume group
+sudo lvcreate -l 100%FREE -n vmdata vm-vg
+
+# 4️⃣ Format the logical volume with XFS filesystem
+sudo mkfs.xfs /dev/vm-vg/vmdata
+
+# 5️⃣ Create a mount point for the new storage
+sudo mkdir /vmdata
+
+# 6️⃣ Mount the logical volume to the mount point
+sudo mount /dev/vm-vg/vmdata /vmdata
+
+# 7️⃣ Make the mount permanent by editing /etc/fstab
+# Add this line to /etc/fstab:
+# UUID=<UUID from blkid> /vmdata xfs defaults,noatime 0 0
+sudo blkid /dev/vm-vg/vmdata  # to get the UUID
+sudo nano /etc/fstab           # edit fstab and add the line
+
+# 8️⃣ Create a directory specifically for VM images
+sudo mkdir -p /vmdata/libvirt-images
+
+# 9️⃣ Set ownership to root and libvirt group so libvirt can use it
+sudo chown -R root:libvirt /vmdata/libvirt-images
+
+# 10️⃣ Set permissions so group members can read/write and inherit group
+sudo chmod 2770 /vmdata/libvirt-images
+
+# 11️⃣ Define a new libvirt storage pool called "vmdata" pointing to that directory
+sudo virsh pool-define-as vmdata dir - - - - /vmdata/libvirt-images
+
+# 12️⃣ Start the storage pool
+sudo virsh pool-start vmdata
+
+# 13️⃣ Make the storage pool autostart at boot
+sudo virsh pool-autostart vmdata
+
+# 14️⃣ Add your user to the libvirt group so you can create disks without sudo
+sudo usermod -aG libvirt kasi
+
+# 15️⃣ Log out and back in (or run `newgrp libvirt`) so group changes take effect
+# Then verify:
+groups
+
+# 16️⃣ Create a new virtual disk in the pool
+virsh vol-create-as vmdata myvm.qcow2 50G --format qcow2
+
+# 17️⃣ Install a VM using the storage pool
+virt-install \
+  --name myvm \
+  --ram 4096 \
+  --vcpus 2 \
+  --disk pool=vmdata,size=50,format=qcow2 \
+  --os-variant ubuntu22.04 \
+  --cdrom /path/to/ubuntu-22.04.iso \
+  --network network=default \
+  --graphics spice
+
+# 18️⃣ Check pool usage
+virsh pool-info vmdata
+
+# 19️⃣ Check individual disk usage
+virsh vol-info --pool vmdata myvm.qcow2
+
+# 20️⃣ Optional: check actual space on filesystem
+du -sh /vmdata/libvirt-images
+
+
+# Check filesystem errors on the VM disk image (VM must be OFF)
+sudo qemu-img check /home/kasi/zabbix_appliance-7.0.4-disk001.qcow2
+
+sudo qemu-img info /home/kasi/zabbix_appliance-7.0.4-disk001.qcow2
+

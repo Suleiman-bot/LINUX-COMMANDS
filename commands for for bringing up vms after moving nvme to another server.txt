@@ -1,0 +1,199 @@
+#!/bin/bash
+
+###############################################################################
+# 1) LIBVIRT: LIST, UNDEFINE, AND CHECK VMs
+###############################################################################
+
+# List all VMs
+sudo virsh list --all
+
+# Stop a VM (example)
+sudo virsh shutdown server1
+
+# Force stop if stuck
+sudo virsh destroy server1
+
+# Undefine all VMs (run one by one)
+sudo virsh undefine server1
+sudo virsh undefine server2
+sudo virsh undefine server3
+sudo virsh undefine agent1
+sudo virsh undefine agent2
+sudo virsh undefine agent3
+sudo virsh undefine agent4
+
+
+###############################################################################
+# 2) CHECK VM DISK FILES
+###############################################################################
+
+# List VM disk images
+ls -lh /vmdata/libvirt-images/
+
+# Check ownership and permissions
+ls -lh /vmdata/libvirt-images/*.qcow2
+
+
+###############################################################################
+# 3) FIX PERMISSIONS FOR LIBVIRT / QEMU
+###############################################################################
+
+# Give libvirt/qemu access to the directory
+sudo chown -R libvirt-qemu:libvirt-qemu /vmdata/libvirt-images
+sudo chmod -R 755 /vmdata/libvirt-images
+
+# Or alternatively:
+# sudo chown -R root:libvirt /vmdata/libvirt-images
+# sudo chmod -R 775 /vmdata/libvirt-images
+
+
+###############################################################################
+# 4) CHECK LIBVIRT STORAGE POOLS
+###############################################################################
+
+# List pools as root
+sudo virsh pool-list --all
+
+# List pools as user (will usually show inactive)
+virsh pool-list --all
+
+# Show pool info
+sudo virsh pool-info vmdata
+
+# List volumes in pool
+sudo virsh vol-list vmdata
+
+# Show volume info
+sudo virsh vol-info --pool vmdata server1.qcow2
+
+# Start and autostart pool
+sudo virsh pool-start vmdata
+sudo virsh pool-autostart vmdata
+
+
+###############################################################################
+# 5) CHECK VM XML LOCATION
+###############################################################################
+
+# Dump VM XML
+sudo virsh dumpxml server1
+
+# Or read directly
+sudo cat /etc/libvirt/qemu/server1.xml
+
+
+###############################################################################
+# 6) RE-CREATE VMs USING EXISTING DISKS (IMPORT)
+###############################################################################
+
+# Server1 (8GB RAM, 2 CPU, VNC 5900)
+sudo virt-install \
+  --name server1 \
+  --ram 8192 \
+  --vcpus 2 \
+  --disk path=/vmdata/libvirt-images/server1.qcow2,format=qcow2 \
+  --import \
+  --network bridge=virbr1 \
+  --osinfo detect=on,require=off \
+  --graphics vnc,port=5900,listen=0.0.0.0 \
+  --noautoconsole
+
+# Repeat pattern for:
+# server2 (5901), server3 (5902)
+# agent1..4 (32GB RAM = 32768, 4 vCPU, ports 5903+)
+
+
+###############################################################################
+# 7) CHECK BLOCK DEVICES AND LVM
+###############################################################################
+
+# Show disks and mountpoints
+lsblk
+
+# Check where /vmdata is mounted
+df -h | grep vmdata
+
+
+###############################################################################
+# 8) MOVE GNS3 DATA TO /vmdata
+###############################################################################
+
+# Go home
+cd ~
+
+# Move GNS3 directory to NVMe-backed storage
+mv /home/kasi/GNS3 /vmdata/gns3/
+
+# Check contents
+ls /vmdata/gns3/
+
+# Remove old subfolders (if cleaning)
+rm -r /vmdata/gns3/appliances
+rm -r /vmdata/gns3/configs
+rm -r /vmdata/gns3/images
+rm -r /vmdata/gns3/projects
+
+
+###############################################################################
+# 9) CREATE SYMLINK BACK TO HOME
+###############################################################################
+
+ln -s /vmdata/gns3/GNS3 /home/kasi/GNS3
+
+# Verify
+ls -l /home/kasi | grep GNS3
+
+
+###############################################################################
+# 10) CHECK QEMU AND UBRIDGE BINARIES
+###############################################################################
+
+# Check qemu
+which qemu-system-x86_64
+qemu-system-x86_64 --version
+
+# Check ubridge
+which ubridge
+ls -l /usr/bin/ubridge
+
+
+###############################################################################
+# 11) FIX UBRIDGE PERMISSIONS
+###############################################################################
+
+# Make it executable by everyone
+sudo chmod 755 /usr/bin/ubridge
+
+# Add user to ubridge group
+sudo usermod -aG ubridge kasi
+
+# Reboot to apply group changes
+sudo reboot
+
+
+###############################################################################
+# 12) AFTER REBOOT: TEST
+###############################################################################
+
+# Test ubridge
+ubridge -h
+
+# Check groups
+groups
+
+# Start GNS3 and test node start
+
+
+###############################################################################
+# 13) GENERAL TROUBLESHOOTING
+###############################################################################
+
+# Check libvirt service
+sudo systemctl status libvirtd
+
+# Restart libvirt
+sudo systemctl restart libvirtd
+
+# Check permissions on /vmdata
+ls -ld /vmdata
+ls -ld /vmdata/libvirt-images

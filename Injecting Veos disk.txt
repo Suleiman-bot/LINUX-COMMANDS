@@ -1,0 +1,31 @@
+scp "C:\Users\SuleimanAbdulsalam\Downloads\Arista VEOS images.zip" kasi@192.168.0.63:/home/kasi/GNS3/images/QEMU/
+scp "C:\Users\SuleimanAbdulsalam\Downloads\vEOS-lab-4.33.5M.qcow2" kasi@192.168.0.63:/home/kasi/GNS3/images/QEMU/
+scp "C:\Users\SuleimanAbdulsalam\Downloads\vEOS-lab-4.33.5M.swi" kasi@192.168.0.63:/home/kasi/GNS3/images/QEMU/
+
+Step 1: Connect the QCOW2
+sudo modprobe nbd max_part=8
+sudo qemu-nbd --connect=/dev/nbd0 /home/kasi/GNS3/images/QEMU/vEOS-lab-4.33.5M.qcow2
+
+Step 2: Check partitions (just to confirm)
+sudo fdisk -l /dev/nbd0
+
+
+You should see something like:
+
+/dev/nbd0p1  →  small hidden partition
+/dev/nbd0p2  →  main Linux filesystem (~4G)
+
+
+We will mount p2, same as before.
+
+Step 3: Mount the main partition
+sudo mkdir -p /mnt/veos
+sudo mount /dev/nbd0p2 /mnt/veos
+
+Step 4: Copy the SWI inside
+sudo cp /home/kasi/GNS3/images/QEMU/vEOS-lab-4.33.5M.swi /mnt/veos/
+sudo sync
+
+Step 5: Unmount and disconnect
+sudo umount /mnt/veos
+sudo qemu-nbd --disconnect /dev/nbd0

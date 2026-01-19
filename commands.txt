@@ -1,0 +1,169 @@
+Beautiful idea, Suleiman. Let’s bottle all the useful spells you’ve cast in this chat into **one clean, reusable Linux cheat sheet** 📜🐧.
+
+Below is a **single consolidated text** you can save as `lab_commands.txt` or keep in your notes.
+
+---
+
+# ================================
+
+# LINUX / LAB TROUBLESHOOTING COMMAND CHEAT SHEET
+
+# From GNS3, KVM, AlmaLinux, Ubuntu sessions
+
+# ================================
+
+# -------------------------------
+
+# KVM / LIBVIRT VM AUTOSTART
+
+# -------------------------------
+
+# Show all VMs
+
+virsh list --all
+
+# Show VMs that are set to autostart
+
+virsh list --autostart
+
+# Enable autostart for a specific VM
+
+sudo virsh autostart server1
+
+# Enable autostart for ALL VMs at once
+
+sudo virsh list --all --name | while read vm; do sudo virsh autostart "$vm"; done
+
+# -------------------------------
+
+# UBRIDGE (GNS3 networking backend)
+
+# -------------------------------
+
+# Find where ubridge is installed
+
+which ubridge
+
+# Check file permissions
+
+ls -l /usr/bin/ubridge
+
+# Fix permissions so all users can execute it
+
+sudo chmod 755 /usr/bin/ubridge
+
+# Add your user to the ubridge group
+
+sudo usermod -aG ubridge $USER
+
+# IMPORTANT: After this, log out and log back in or reboot
+
+# Test if ubridge runs (no permission error = good)
+
+ubridge -v
+
+# Kill stuck ubridge processes (if nodes start and die)
+
+sudo pkill -f ubridge
+
+# -------------------------------
+
+# NETWORK TROUBLESHOOTING (ALMALINUX / UBUNTU)
+
+# -------------------------------
+
+# Install traceroute on AlmaLinux / RHEL / Rocky / CentOS
+
+dnf install traceroute -y
+
+# Use traceroute
+
+traceroute 192.168.56.11
+
+# Alternative tool (usually already installed)
+
+tracepath 192.168.56.11
+
+# -------------------------------
+
+# DISK / SYSTEM COMMANDS (from earlier context)
+
+# -------------------------------
+
+# Check filesystem from initramfs or recovery
+
+fsck /dev/sdX
+
+# Wipe a disk (DANGEROUS: destroys all data)
+
+wipefs -a /dev/sdb
+
+# Or using dd (VERY DANGEROUS)
+
+dd if=/dev/zero of=/dev/sdb bs=1M status=progress
+
+# -------------------------------
+
+# PERMISSIONS & OWNERSHIP
+
+# -------------------------------
+
+# Change permissions
+
+chmod 755 filename
+
+# Change owner and group
+
+chown user:group filename
+
+# -------------------------------
+
+# GENERAL DEBUGGING
+
+# -------------------------------
+
+# Show where a command is located
+
+which traceroute
+which ubridge
+
+# Show running processes
+
+ps aux | grep ubridge
+
+# Kill a process by name
+
+pkill processname
+
+# Kill by PID
+
+kill -9 PID
+
+# -------------------------------
+
+# PACKAGE MANAGEMENT
+
+# -------------------------------
+
+# AlmaLinux / RHEL
+
+dnf install package -y
+dnf repolist
+
+# Ubuntu / Debian
+
+apt update
+apt install package -y
+
+# ================================
+
+# END OF CHEAT SHEET
+
+# ================================
+
+---
+
+If you want, I can:
+
+* Split this into **GNS3-only**, **Linux-only**, **Network-only** cheat sheets
+* Or generate this as a **downloadable text file** format you can keep on your server.
