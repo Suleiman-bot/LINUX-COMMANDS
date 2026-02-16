@@ -1,0 +1,169 @@
+These Linux commands helped me most in last 13 years of IT career
+
+Daily stuff:
+• ps aux | grep {process} - Find that sneaky process
+• lsof -i :{port} - Who's hogging that port?
+• df -h - The classic "we're out of space" checker
+• netstat -tulpn - Network connection detective
+• kubectl get pods | grep -i error - K8s trouble finder
+
+Log related commands:
+• tail -f /var/log/* - Real-time log watcher
+• journalctl -fu service-name - SystemD log stalker
+• grep -r "error" . - The error hunter
+• zcat access.log.gz | grep "500" - Compressed log ninja
+• less +F - The better tail command
+
+Container cli:
+• docker ps --format '{{.Names}} {{.Status}}' - Clean status check
+• docker stats --no-stream - Quick resource check
+• crictl logs {container} - Raw container stories
+• docker exec -it - The container backdoor
+• podman top - Process peek inside containers
+
+System Detectives:
+• htop - System resource storyteller
+• iostat -xz 1 - Disk performance poet
+• free -h - Memory mystery solver
+• vmstat 1 - System vital signs
+• dmesg -T | tail - Kernel's recent gossip
+
+Network stuff:
+• curl -v - HTTP conversation debugger
+• dig +short - Quick DNS lookup
+• ss -tunlp - Socket statistics simplified
+• iptables -L - Firewall rule reader
+• traceroute - Path finder
+
+File and stuff:
+• find . -name "*.yaml" -type f - YAML hunter
+• rsync -avz - Better file copier
+• tar -xvf - The unzipper (yes, we all google this)
+• ln -s - Symlink wizard
+• chmod +x - Make it executable
+
+Performance:
+• strace -p {pid} - System call spy
+• tcpdump -i any - Network packet sniffer
+• sar -n DEV 1 - Network stats watch
+• uptime - Load average at a glance
+• top -c - Classic process viewer
+
+Git Essentials:
+• git log --oneline - History simplified
+• git reset --hard HEAD^ - The "oops" eraser
+• git stash - The work hider
+• git diff --cached - What's staged?
+• git blame - The "who did this?" resolver
+
+Quick Fixes:
+• sudo !! - Run last command with sudo
+• ctrl+r - Command history search
+• history | grep - Command time machine
+• alias - Command shortcut maker
+• watch - Command repeater
+
+
+
+The Ultimate Kubernetes Cheatsheet ☸️
+
+➛ Pod Essentials:
+• kubectl get pods -o wide - Show pod IP and node location
+• kubectl logs -f {pod} - Stream pod logs in real-time
+• kubectl exec -it {pod} -- sh - Open interactive shell inside container
+• kubectl describe pod {pod} - Show detailed status and events
+• kubectl delete pod --grace-period=0 - Force delete a pod immediately
+
+➛ Node & Cluster:
+• kubectl get nodes - List all nodes and their status
+• kubectl top nodes - Show CPU and memory usage of nodes
+• kubectl drain {node} - Safely evict all pods for maintenance
+• kubectl cordon {node} - Mark node as unschedulable
+• kubectl cluster-info - Display cluster master and service info
+
+➛ Deployment & Scaling:
+• kubectl create deployment - Create a new deployment
+• kubectl scale --replicas=3 - Update the number of running pods
+• kubectl rollout restart - Restart deployment with new pods
+• kubectl rollout undo - Revert to the previous version
+• kubectl rollout status - Watch the progress of a deployment
+
+➛ Networking:
+• kubectl get svc - List services and external IPs
+• kubectl expose deploy - Create a service for a deployment
+• kubectl port-forward - Access a pod port from your local machine
+• kubectl get ingress - List ingress rules and addresses
+• kubectl get endpoints - List backend pod IPs for services
+
+➛ Debugging & Fixes:
+• kubectl edit {resource} - Edit live configuration in text editor
+• kubectl apply -f {file} - Create or update resources from file
+• kubectl diff -f {file} - Compare file config with live state
+• kubectl auth can-i - Check permissions for an action
+• kubectl api-resources - List all available resource types
+
+➛ Cleanup:
+• kubectl delete -f {file} - Delete resources defined in a file
+• kubectl delete pod --all - Delete all pods in current namespace
+• kubectl delete evictions - Delete failed eviction records
+• kubectl prune - Remove resources not present in file
+
+Top 23 Git Commands Every Developer Should Know 👇
+
+• Daily Workflow
+
+1. git clone – Download repo
+
+2. git status – See what changed
+
+3. git add – Stage files
+
+4. git commit – Save snapshot
+
+5. git pull – Get latest updates
+
+6. git push – Upload your work
+
+• Branch Management 
+
+7. git branch – View branches
+
+8. git branch <name> – Create branch
+
+9. git checkout <name> – Switch branch
+
+10. git checkout -b <name> – Create + switch
+
+11. git merge – Combine branches
+
+12. git rebase – Clean commit history
+
+• Debug Like a Pro
+
+13. git log – View commit history
+
+14. git diff – Compare changes
+
+15. git show <id> – Inspect commit
+
+16. git blame <file> – Who wrote this line? 👀
+
+• Fix Your Mistakes
+
+17. git reset – Undo commits (careful)
+
+18. git revert – Safe undo with new commit
+
+19. git stash – Save work temporarily
+
+20. git stash pop – Bring it back
+
+• Level Up
+
+21. git fetch – Download changes only
+
+22. git cherry-pick – Apply specific commit
+
+23. git reflog – Recover “lost” commits
+
+If you know these, you’re already ahead of 70% devs in interviews.
